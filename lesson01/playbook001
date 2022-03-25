@@ -1,0 +1,51 @@
+---
+- name: install apache
+  hosts: all
+  become: yes
+ 
+  tasks:
+ 
+  - name: install apache
+    yum: 
+      name=httpd 
+      update_cache=yes
+      state=present
+ 
+  - name: start firewall
+    service: 
+      name: firewalld
+      state: started
+      enabled: yes      
+
+  - firewalld:
+      service=http
+      permanent=true
+      state=enabled
+      immediate=yes
+ 
+  - name: restart firewall
+    service: 
+      name=firewalld 
+      state=restarted 
+
+  - name: start apache
+    service: 
+      name=httpd 
+      state=started
+      
+  - name: create index file
+    blockinfile:
+      path="/var/www/html/index.html"
+      create=yes    
+      state=present
+      block="<!DOCTYPE html><html lang="en"><head></head><body><h1>Welcome to my web server</h1></body>"       
+      marker="<!--{mark}-->"
+            
+  - name: collect facts about system services
+    service_facts:
+    register: services_state
+
+  - name: Debug
+    debug:
+      msg: "Apache service is {{ services_state.ansible_facts.services['httpd.service'].state }}"  
+...
