@@ -1,0 +1,36 @@
+---
+- name: remove apache
+  hosts: all
+  become: yes
+ 
+  tasks:
+ 
+  - name: remove apache
+    yum: 
+      name=httpd 
+      update_cache=yes
+      state=absent
+ 
+  - name: start firewall
+    service: 
+      name: firewalld
+      state: started
+      enabled: yes      
+
+  - firewalld:
+      service=http
+      permanent=true
+      state=disabled
+      immediate=yes
+ 
+  - name: restart firewall
+    service: 
+      name=firewalld 
+      state=restarted 
+
+  - name: create index file
+    file:
+      path="/var/www/html/index.html"
+      state=absent
+            
+...
