@@ -1,0 +1,29 @@
+---
+- name: change grub
+  hosts: all
+  become: yes
+ 
+  tasks:
+ 
+  - name: launche grub2-mkconfig
+    command: grub2-mkconfig
+
+  - name: change grub default add ifnames
+    lineinfile:
+      path="/etc/default/grub"
+      state=present
+      backrefs=yes
+      regexp='^(GRUB_CMDLINE_LINUX=(?!.* net\.ifnames)\"[^\"]+)(\".*)'
+      line='\1 net.ifnames=0\2'
+
+  - name: change grub default add biosdevname
+    lineinfile:
+      path="/etc/default/grub"
+      state=present
+      backrefs=yes
+      regexp='^(GRUB_CMDLINE_LINUX=(?!.* biosdevname)\"[^\"]+)(\".*)'
+      line='\1 biosdevname=0\2'
+
+            
+...
+
