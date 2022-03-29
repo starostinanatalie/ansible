@@ -5,4 +5,7 @@
 .ssh/id_rsa.pub
 .ssh/known_hosts
 .viminfo
+.ansible/*
+.bash_history
+.gitconfig
 
