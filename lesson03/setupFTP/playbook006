@@ -1,0 +1,91 @@
+---
+- name: install ftp
+  hosts: all
+  become: yes
+  vars:
+    anonymous_enable: yes
+    local_enable: yes
+    write_enable: yes
+    anon_upload_enable: yes
+    anon_mkdir_write_enable: yes
+ 
+  tasks:
+ 
+  - name: install ftp
+    yum: 
+      name=vsftpd 
+      state=present
+    notify:
+      - start_ftp
+
+  - name: copy config from template
+    template:
+      src: ftp_conf.j2
+      dest: /etc/vsftpd/vsftpd.conf
+    notify:
+      - set_SElinux
+      - set_firewall
+      - start_ftp
+ 
+  - name: create directories with rights
+    file:
+      path: "/var/ftp/pub"
+      owner: ftp
+      seuser: ftp
+      state: directory
+      recurse: yes
+      mode: '544'
+    notify:
+      - restart_ftp      
+
+  - name: create directory for upload
+    file:  
+      path: "/var/ftp/pub/upload"
+      owner: ftp
+      seuser: ftp
+      state: directory
+      recurse: yes
+      mode: '777'
+    notify:
+      - restart_ftp
+
+  - name: collect facts about system services
+    service_facts:
+    register: services_state
+
+  - name: Debug
+    debug:
+      msg: "FTP service is {{ services_state.ansible_facts.services['vsftpd.service'].state }}"  
+
+  - name: restart based on state
+    service:
+      name: vsftpd
+      state: restarted
+    when: services_state.ansible_facts.services['vsftpd.service'].state == 'inactive'
+
+  - name: Debug
+    debug:
+      msg: "FTP service is {{ services_state.ansible_facts.services['vsftpd.service'].state }}"
+
+
+  handlers:
+    - name: set_firewall
+      firewalld:
+        service=ftp
+        permanent=true
+        state=enabled
+        immediate=yes
+    - name: set_SElinux
+      ansible.posix.seboolean:
+        name: "ftpd_anon_write"
+        persistent: yes
+        state: yes
+    - name: start_ftp
+      service:
+        name: vsftpd
+        state: started
+    - name: restart_ftp
+      service:
+        name: vsftpd
+        state: restarted
+...
