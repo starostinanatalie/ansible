@@ -1,0 +1,5 @@
+---
+- name: Including role setup FTP
+  hosts: all
+  roles:
+    - setupFTP
